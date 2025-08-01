@@ -1,0 +1,9 @@
+pandas
+selenium
+python-dotenv
+streamlit
+streamlit-option-menu
+plotly
+google-api-python-client
+st-gsheets-connection
+openpyxl
