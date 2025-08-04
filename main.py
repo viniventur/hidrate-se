@@ -16,7 +16,7 @@ warnings.filterwarnings('ignore')
 
 st.set_page_config(page_title=nome_pag_title(), page_icon=img_pag_icon(), layout='centered')
 
-@st.cache_data(show_spinner=False)
+@st.cache_resource(show_spinner=False)
 def dados_nomes_select():
         
     data = obter_dados_pessoal()
@@ -27,34 +27,27 @@ def dados_nomes_select():
     # Adiciona a nova linha
     data = pd.concat([pd.DataFrame([linha_em_branco]), data], ignore_index=True)
 
-    return data
+    data = data.sort_values(by='nome_padronizado')
 
-# Config Layout (condicional de local ou online)
+    return data['nome_padronizado']
+
 
 def main():
 
-    logo_path= 'src/assets/logo_governanca.png'
+    if 'aviso_duplicata' not in st.session_state:
+        st.session_state.aviso_duplicata = False
+
+    logo_path= 'src/assets/logo_hidratese.png'
     logo_base64 = get_image_as_base64(logo_path)
 
     st.markdown(
         f"""
-        <div style="display: flex; justify-content: center; align-items: center; height: 80px;">
-            <img src="data:image/png;base64,{logo_base64}" style="margin-right: 35px; width: 500px;">
+        <div style="display: flex; justify-content: center; align-items: center; height: 130px;">
+            <img src="data:image/png;base64,{logo_base64}" style="margin-right: 35px; width: 300px;">
         </div>
         """,
         unsafe_allow_html=True
     )
-
-    st.markdown(
-        f"""
-        <div style="display: flex; justify-content: center; align-items: center; height: 100px; text-align: center;">
-            <h1 style="font-size: 35px; margin: 0; color: #005CA8;">Hidrate-se</h1>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.write("Descrição breve do programa")
 
     form_container = st.container(border=True)
 
@@ -82,7 +75,7 @@ def main():
                 nome = st.selectbox('Nome', options=dados_nomes_select())
 
             with col2:
-                qnt_bebida = st.number_input('Quantidade bebida (litros)')
+                qnt_bebida = st.number_input('Quantidade bebida (litros)', step=0.25, min_value=0.00)
 
             select_qnd_bebeu = st.radio('Quando você bebeu essa quantidade?', options=[f'Hoje ({data_atual()})', 'Outro dia'], horizontal=True)
 
@@ -92,7 +85,7 @@ def main():
             else:
                 data_registro = data_atual()
             
-            botao_enviar = st.button('Enviar', use_container_width=True)
+            botao_enviar = st.button('Enviar :material/check_box:', use_container_width=True)
 
             if botao_enviar:
 
@@ -100,17 +93,34 @@ def main():
                     st.error('Selecione o servidor.')
                 elif qnt_bebida == 0:
                     st.error('Insira a quantidade.')
+                elif (len(conferir_registro_duplicado(nome, data_registro)) > 0) & (st.session_state.aviso_duplicata == False):
+                    st.warning("Você já realizou um registro nesta data 👇")
+                    st.dataframe(conferir_registro_duplicado(nome, data_registro), use_container_width=True, hide_index=True)
+                    st.warning("Se deseja realizar outro registro, clique enviar novamente para confirmar.")
+                    st.session_state.aviso_duplicata = True
+
+                    botao_cancelar = st.button('Cancelar :material/cancel:', use_container_width=True, key="botao_cancelar_registro")
+
+                    if botao_cancelar:
+                        st.rerun()
                 else:
+                    novo_registro(nome, data_registro, qnt_bebida)
                     st.session_state.msg_registro_feito = st.success(':material/water_full: Registro enviado com sucesso!')
                     st.session_state.registro_feito = True
+                    st.session_state.aviso_duplicata = False
                     st.rerun()
         
         if st.session_state.registro_feito == True:
             st.success(':material/water_full: Registro enviado com sucesso!')
-            if st.button("Clique para realizar outro registro", use_container_width=True):
+            if st.button("Clique para realizar outro registro :material/replay:", use_container_width=True):
                 st.session_state.registro_feito = False
                 st.rerun()
 
+    with st.expander('Calculadora de litros', expanded=False):
+        qnt_ml = st.number_input('Quantidade em mililitros (ml):', step=50.00, min_value=00.00)
+
+        if qnt_ml != 0:
+            st.success(f'Essa quantidade equivale a {ml_para_litros(qnt_ml):.2f} litros!'.replace('.', ','))
 
     st.markdown(
         f"""
@@ -125,6 +135,14 @@ def main():
 
 
     st.write(obter_dados_pessoal())
+    st.write(obter_dados_acompanhamento())
+
+    st.divider()
+
+    analise_ranking()
+
+    st.divider()
+
             
 if __name__ == "__main__":
     main()

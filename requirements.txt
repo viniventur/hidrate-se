@@ -7,3 +7,4 @@ plotly
 google-api-python-client
 st-gsheets-connection
 openpyxl
+oauth2client

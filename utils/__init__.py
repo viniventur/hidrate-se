@@ -23,11 +23,18 @@ from utils.conn_gdriver import (
 )
 from utils.conn_gsheets import (
     obter_dados_pessoal,
-    obter_dados_acompanhamento
+    obter_dados_acompanhamento,
+    connect_to_gsheet,
+    novo_registro,
+    conferir_registro_duplicado
 )
 from utils.validacao_dados import (
     get_image_as_base64,
     converter_para_excel,
     cont_dias,
-    padronizar_data
+    padronizar_data,
+    ml_para_litros
+)
+from utils.analise_ranking import(
+    analise_ranking
 )

@@ -62,3 +62,10 @@ def cont_dias(data_x, data_y):
 
     return diferenca
 
+
+def ml_para_litros(ml):
+    try:
+        return ml / 1000
+    except ValueError:
+        st.error("Por favor, digite um número válido.")
+
