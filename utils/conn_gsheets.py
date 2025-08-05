@@ -115,9 +115,9 @@ def dados_analise_meta():
 
     df_acompanhamento['Meta Atingida'] = df_acompanhamento['Quantidade'] >= df_acompanhamento['Meta']
 
-    
     # Formata a data para exibição
-    df_acompanhamento['Data'] = df_acompanhamento['Data'].dt.strftime('%d/%m/%Y')
+    df_acompanhamento['Data'] = pd.to_datetime(df_acompanhamento['Data']).dt.strftime('%d/%m/%Y')
+    #df_acompanhamento['Data'] = df_acompanhamento['Data'].dt.strftime('%d/%m/%Y %H:%M')
 
     return df_acompanhamento
     

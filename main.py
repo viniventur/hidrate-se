@@ -97,9 +97,16 @@ def main():
 
             if select_qnd_bebeu == 'Outro dia':
                 data_registro = st.date_input('Em que dia você bebeu essa quantidade?', format='DD/MM/YYYY', max_value=datetime.now(pytz.timezone("America/Sao_Paulo")))
-                data_registro = padronizar_data(data_registro)
+                #data_registro = padronizar_data(data_registro)
+                hora_registro = st.time_input('Que horas?')
+
+                # Junta os dois em um datetime completo
+                data_hora_registro = datetime.combine(data_registro, hora_registro)
+
+                # Formata no padrão desejado: dd/mm/yyyy HH:MM
+                data_hora_registro = data_hora_registro.strftime('%d/%m/%Y %H:%M')
             else:
-                data_registro = data_atual()   
+                data_hora_registro = data_hr_atual()   
             
             botao_enviar = st.button('Enviar :material/check_box:', use_container_width=True)
 
@@ -110,10 +117,10 @@ def main():
                 elif qnt_bebida == 0:
                     st.error('Insira a quantidade.')
                 else:
-                    novo_registro(nome, data_registro, qnt_bebida)
+                    novo_registro(nome, data_hora_registro, qnt_bebida)
                     st.session_state.registro_feito = True
                     st.cache_data.clear()
-                    st.session_state.faltante_meta, st.session_state.quantidade = conferir_meta(nome, data_registro)
+                    st.session_state.faltante_meta, st.session_state.quantidade = conferir_meta(nome, data_hora_registro)
                     st.rerun()
         
         if st.session_state.registro_feito == True:

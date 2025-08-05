@@ -101,38 +101,47 @@ def analise_ranking():
     st.markdown("##### Tabela completa de registros")
 
     # Formatar Data
-    df_acompanhamento['Data'] = pd.to_datetime(df_acompanhamento['Data']).dt.strftime('%d/%m/%Y')
-
+    df_acompanhamento['Data'] = pd.to_datetime(df_acompanhamento['Data'], format='%d/%m/%Y %H:%M')
+    
     # Substituir True/False por emojis
     df_acompanhamento['Meta Atingida'] = df_acompanhamento['Meta Atingida'].apply(lambda x: '✅' if x else '❌')
 
     df_acompanhamento = df_acompanhamento.sort_values(by='Data', ascending=False)
 
+    col1, col2 = st.columns(2)
 
-    filtro_nome = st.multiselect("Nome", options=dados_nomes_select(), placeholder="Filtro por nome")
+    with col1:
+        # Filtros
+        filtro_nome = st.multiselect("Nome", options=dados_nomes_select(), placeholder="Filtro por nome")
 
-    # FILTRO DE DATA E HORA
+    # Filtro de intervalo de data
+    data_min = df_acompanhamento['Data'].min().date()
+    data_max = df_acompanhamento['Data'].max().date()
+    with col2:
+        filtro_data = st.date_input("Período", value=(data_min, data_max), min_value=data_min, max_value=data_max, format='DD/MM/YYYY')
 
+    # Aplica filtros
+    df_filtrado = df_acompanhamento.copy()
+
+    # Filtro por nome
     if filtro_nome:
+        df_filtrado = df_filtrado[df_filtrado['Nome'].isin(filtro_nome)]
 
-        df_acompanhamento_filtrado = df_acompanhamento.loc[df_acompanhamento['Nome'].isin(filtro_nome)]
+    # Filtro por data
+    if isinstance(filtro_data, tuple) and len(filtro_data) == 2:
+        data_inicio, data_fim = filtro_data
+        df_filtrado = df_filtrado[(df_filtrado['Data'].dt.date >= data_inicio) & (df_filtrado['Data'].dt.date <= data_fim)]
 
-        # Exibir na interface
-        st.dataframe(df_acompanhamento_filtrado.rename(columns={"Quantidade": "Quantidade (litros)", "Meta": "Meta (litros)"}),
-                    use_container_width=True, 
-                    hide_index=True,
-                    row_height=80,
-                    column_config={
-                        'Foto': st.column_config.ImageColumn(width="small")
-                    },
-                    column_order=["Foto", "Nome", "Data", "Quantidade (litros)", "Meta (litros)", "Meta Atingida"])
-    else:
-        # Exibir na interface
-        st.dataframe(df_acompanhamento.rename(columns={"Quantidade": "Quantidade (litros)", "Meta": "Meta (litros)"}),
-                    use_container_width=True, 
-                    hide_index=True,
-                    row_height=80,
-                    column_config={
-                        'Foto': st.column_config.ImageColumn(width="small")
-                    },
-                    column_order=["Foto", "Nome", "Data", "Quantidade (litros)", "Meta (litros)", "Meta Atingida"])
+    df_filtrado['Data'] = df_filtrado['Data'].dt.strftime('%d/%m/%Y %H:%M')
+
+    # Exibição
+    st.dataframe(
+        df_filtrado.rename(columns={"Quantidade": "Quantidade (litros)", "Meta": "Meta (litros)"}),
+        use_container_width=True,
+        hide_index=True,
+        row_height=80,
+        column_config={
+            'Foto': st.column_config.ImageColumn(width="small")
+        },
+        column_order=["Foto", "Nome", "Data", "Quantidade (litros)", "Meta (litros)", "Meta Atingida"]
+    )
