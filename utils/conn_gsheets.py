@@ -92,6 +92,8 @@ def dados_nomes_select():
 def dados_analise_meta():
 
     df_pessoal = obter_dados_pessoal()
+    df_pessoal['Foto'] = df_pessoal['link_foto'].str.extract(r'id=([^&]+)')  # extrai só o ID
+    df_pessoal['Foto'] = 'https://drive.google.com/thumbnail?id=' + df_pessoal['Foto']
     df_pessoal.drop(columns=["Nome"], inplace=True)
     df_pessoal.rename(columns={"nome_padronizado": "Nome"}, inplace=True)
 
@@ -102,7 +104,7 @@ def dados_analise_meta():
     df_acompanhamento = df_acompanhamento.groupby(['Nome', 'Data'], as_index=False)['Quantidade'].sum()
         # Cria coluna de meta atingida com base no peso corporal
     df_acompanhamento = df_acompanhamento.merge(
-        df_pessoal[['Nome', 'Peso']],  # seleciona só as colunas que precisa
+        df_pessoal[['Nome', 'Peso', 'Foto']],  # seleciona só as colunas que precisa
         on='Nome',
         how='left'
     )

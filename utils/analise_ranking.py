@@ -17,12 +17,6 @@ warnings.filterwarnings('ignore')
 
 def analise_ranking():
 
-    df_pessoal = obter_dados_pessoal()
-    df_pessoal['Foto'] = df_pessoal['link_foto'].str.extract(r'id=([^&]+)')  # extrai só o ID
-    df_pessoal['Foto'] = 'https://drive.google.com/thumbnail?id=' + df_pessoal['Foto']
-    df_pessoal.drop(columns=["Nome"], inplace=True)
-    df_pessoal.rename(columns={"nome_padronizado": "Nome"}, inplace=True)
-
     df_acompanhamento = obter_dados_acompanhamento()
 
     if len(df_acompanhamento) == 0:
