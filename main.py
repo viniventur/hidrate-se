@@ -16,10 +16,27 @@ warnings.filterwarnings('ignore')
 
 st.set_page_config(page_title=nome_pag_title(), page_icon=img_pag_icon(), layout='centered')
 
+
+def conferir_meta(nome, data_registro):
+    
+    df_acompanhamento = dados_analise_meta()
+
+    df_acompanhamento['Faltante'] = df_acompanhamento['Meta'] - df_acompanhamento['Quantidade']
+
+    df_acompanhamento = df_acompanhamento.loc[(df_acompanhamento['Nome'] == nome) & (df_acompanhamento['Data'] == data_registro)]
+
+    return df_acompanhamento['Faltante'].values[0], df_acompanhamento['Quantidade'].values[0]
+
 def main():
 
     if 'aviso_duplicata' not in st.session_state:
         st.session_state.aviso_duplicata = False
+
+    if 'faltante_meta' not in st.session_state:
+        st.session_state.faltante_meta = False
+
+    if 'quantidade' not in st.session_state:
+        st.session_state.quantidade = False
 
     logo_path= 'src/assets/logo_hidratese.png'
     logo_base64 = get_image_as_base64(logo_path)
@@ -33,13 +50,13 @@ def main():
         unsafe_allow_html=True
     )
 
-    with st.expander('Quantos litros preciso beber para bater a meta? (de água... 😏)', expanded=False):
+    with st.expander('Quantos litros de água diária preciso beber para manter esse corpinho bem hidratado? 😂💦', expanded=False):
         st.write("Métrica: 35 ml por quilo de peso.")
 
         peso = st.number_input('Qual o seu peso? (kg)', step=1.00, min_value=00.00)
 
         if st.button("Calcular :material/calculate:"):
-            st.success(f'Você precisa beber {ml_para_litros(peso*35):.2f} litros de água por dia! :material/water_full:'.replace('.', ','))
+            st.success(f'Você precisa beber {ml_para_litros(peso*35):.2f}'.replace('.', ',') + ' litros (de água... 😏) por dia! :material/water_full:')
 
     with st.expander('Calculadora de litros', expanded=False):
         qnt_ml = st.number_input('Quantidade em mililitros (ml):', step=50.00, min_value=00.00)
@@ -48,6 +65,7 @@ def main():
             st.success(f'Essa quantidade equivale a {ml_para_litros(qnt_ml):.2f} litros!'.replace('.', ','))
 
     form_container = st.container(border=True)
+
 
     with form_container:
         
@@ -81,7 +99,7 @@ def main():
                 data_registro = st.date_input('Em que dia você bebeu essa quantidade?', format='DD/MM/YYYY', max_value=datetime.now(pytz.timezone("America/Sao_Paulo")))
                 data_registro = padronizar_data(data_registro)
             else:
-                data_registro = data_atual()
+                data_registro = data_atual()   
             
             botao_enviar = st.button('Enviar :material/check_box:', use_container_width=True)
 
@@ -91,26 +109,22 @@ def main():
                     st.error('Selecione o servidor.')
                 elif qnt_bebida == 0:
                     st.error('Insira a quantidade.')
-                elif (len(conferir_registro_duplicado(nome, data_registro)) > 0) & (st.session_state.aviso_duplicata == False):
-                    st.warning("Você já realizou um registro nesta data 👇")
-                    st.dataframe(conferir_registro_duplicado(nome, data_registro), use_container_width=True, hide_index=True)
-                    st.warning("Se deseja realizar outro registro, clique enviar novamente para confirmar.")
-                    st.session_state.aviso_duplicata = True
-
-                    botao_cancelar = st.button('Cancelar :material/cancel:', use_container_width=True, key="botao_cancelar_registro")
-
-                    if botao_cancelar:
-                        st.rerun()
                 else:
                     novo_registro(nome, data_registro, qnt_bebida)
-                    st.session_state.msg_registro_feito = st.success(':material/water_full: Registro enviado com sucesso!')
                     st.session_state.registro_feito = True
-                    st.session_state.aviso_duplicata = False
                     st.cache_data.clear()
+                    st.session_state.faltante_meta, st.session_state.quantidade = conferir_meta(nome, data_registro)
                     st.rerun()
         
         if st.session_state.registro_feito == True:
             st.success(':material/water_full: Registro enviado com sucesso!')
+            if st.session_state.faltante_meta <= 0:
+                st.success("Parabéns! Você bateu a meta diária!")
+                st.write(f"Quantidade bebida hoje: {st.session_state.quantidade} litros")
+                st.balloons()
+            else:
+                st.warning(f"Quase lá! Faltam {st.session_state.faltante_meta} litros para bater a meta! 🏃‍♂️‍➡️")
+
             if st.button("Clique para realizar outro registro :material/replay:", use_container_width=True):
                 st.session_state.registro_feito = False
                 st.rerun()

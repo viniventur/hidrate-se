@@ -29,24 +29,7 @@ def analise_ranking():
         st.warning("Ainda não há registros 👀")
         st.stop()
 
-    df_acompanhamento['Data'] = pd.to_datetime(df_acompanhamento['Data'], dayfirst=True)
-
-    # Agrupa por pessoa e data, somando a quantidade do dia
-    df_acompanhamento = df_acompanhamento.groupby(['Nome', 'Data'], as_index=False)['Quantidade'].sum()
-
-    # Cria coluna de meta atingida com base no peso corporal
-    df_acompanhamento = df_acompanhamento.merge(
-        df_pessoal[['Nome', 'Foto', 'Peso']],  # seleciona só as colunas que precisa
-        on='Nome',
-        how='left'
-    )
-
-    df_acompanhamento['Meta'] = ml_para_litros(df_acompanhamento['Peso'] * 35)
-
-    df_acompanhamento['Meta Atingida'] = df_acompanhamento['Quantidade'] >= df_acompanhamento['Meta']
-
-    # Formata a data para exibição
-    df_acompanhamento['Data'] = df_acompanhamento['Data'].dt.strftime('%d/%m/%Y')
+    df_acompanhamento = dados_analise_meta()
 
     # 2. Filtrar quem bateu a meta
     df_meta = df_acompanhamento[df_acompanhamento['Meta Atingida']]
@@ -133,6 +116,8 @@ def analise_ranking():
 
 
     filtro_nome = st.multiselect("Nome", options=dados_nomes_select(), placeholder="Filtro por nome")
+
+    # FILTRO DE DATA E HORA
 
     if filtro_nome:
 
