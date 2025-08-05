@@ -57,9 +57,13 @@ def analise_ranking():
     fig.update_layout(
         xaxis_title='Quantidade de vezes que bateu a meta',
         yaxis_title='',
-        yaxis=dict(tickmode='linear'),
+        yaxis=dict(
+            tickmode='linear',
+            tickfont=dict(size=16)  # <-- aumenta o tamanho do texto do eixo Y aqui
+        ),
         plot_bgcolor='rgba(0,0,0,0)'
     )
+
     # Aumenta tamanho da fonte dos rótulos e ajusta cor do marcador
     fig.update_traces(
         textposition='outside',
@@ -71,32 +75,43 @@ def analise_ranking():
 
     ########## gráfico de linha ################
 
+    ########## gráfico de linha - consumo médio diário ##########
+
     df_acompanhamento['Data'] = pd.to_datetime(df_acompanhamento['Data'], dayfirst=True, errors='coerce')
 
     # Remove registros com datas inválidas ou quantidade faltante
     df_acompanhamento = df_acompanhamento.dropna(subset=['Data', 'Quantidade'])
 
-    # Agrupa por Nome e Data (caso haja duplicidade no mesmo dia)
-    df_agg = df_acompanhamento.groupby(['Nome', 'Data'], as_index=False)['Quantidade'].sum()
+    # Agrupa apenas por Data, calculando o consumo médio no dia
+    df_media_diaria = df_acompanhamento.groupby('Data', as_index=False)['Quantidade'].mean()
 
-    # Cria gráfico
+    # Formata os valores com 2 casas decimais para exibição nos rótulos
+    df_media_diaria['Quantidade_formatada'] = df_media_diaria['Quantidade'].round(2).astype(str)
+
+    # Cria gráfico com rótulos formatados
     fig = px.line(
-        df_agg,
+        df_media_diaria,
         x='Data',
         y='Quantidade',
-        color='Nome',
         markers=True,
-        title='Evolução diária de consumo por pessoa'
+        text=df_media_diaria['Quantidade_formatada'],
+        title='Consumo médio diário da equipe (litros)'
+    )
+
+    fig.update_traces(
+        textposition='top center',
+        textfont_size=12
     )
 
     fig.update_layout(
-        xaxis_title='Data',
-        yaxis_title='Quantidade (litros)',
+        xaxis_title='',
+        yaxis_title='Média de consumo (litros)',
         plot_bgcolor='rgba(0,0,0,0)',
-        legend_title='Pessoa'
+        showlegend=False
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
 
     st.markdown("##### Tabela completa de registros")
 
