@@ -64,3 +64,19 @@ def conferir_registro_duplicado(nome, data_registro):
         return df.loc[(df["Nome"] == nome) & (df["Data"] == data_registro)]
     except Exception as e:
         return st.error(f"Erro ao carregar dados: {e}")
+    
+
+@st.cache_resource(show_spinner=False)
+def dados_nomes_select():
+        
+    data = obter_dados_pessoal()
+
+    # Cria uma linha com espaço em branco para todas as colunas
+    linha_em_branco = {col: "" for col in data.columns}
+
+    # Adiciona a nova linha
+    data = pd.concat([pd.DataFrame([linha_em_branco]), data], ignore_index=True)
+
+    data = data.sort_values(by='nome_padronizado')
+
+    return data['nome_padronizado']

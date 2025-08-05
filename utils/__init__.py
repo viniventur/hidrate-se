@@ -26,7 +26,8 @@ from utils.conn_gsheets import (
     obter_dados_acompanhamento,
     connect_to_gsheet,
     novo_registro,
-    conferir_registro_duplicado
+    conferir_registro_duplicado,
+    dados_nomes_select
 )
 from utils.validacao_dados import (
     get_image_as_base64,

@@ -13,7 +13,7 @@ def nome_pag_title():
     return 'Hidrate-se - Governança'
 
 def img_pag_icon():
-    return 'src/assets/logo_gov_favicon.png'
+    return 'src/assets/gota_flaticon.png'
 
 # modulos
 @st.cache_data(show_spinner=False)

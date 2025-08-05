@@ -2,7 +2,7 @@ import pandas as pd
 import time
 import json
 import pytz 
-import datetime
+from datetime import datetime
 import streamlit as st
 from dotenv import load_dotenv, dotenv_values
 env = dotenv_values('.env')
@@ -16,22 +16,6 @@ warnings.filterwarnings('ignore')
 
 st.set_page_config(page_title=nome_pag_title(), page_icon=img_pag_icon(), layout='centered')
 
-@st.cache_resource(show_spinner=False)
-def dados_nomes_select():
-        
-    data = obter_dados_pessoal()
-
-    # Cria uma linha com espaço em branco para todas as colunas
-    linha_em_branco = {col: "" for col in data.columns}
-
-    # Adiciona a nova linha
-    data = pd.concat([pd.DataFrame([linha_em_branco]), data], ignore_index=True)
-
-    data = data.sort_values(by='nome_padronizado')
-
-    return data['nome_padronizado']
-
-
 def main():
 
     if 'aviso_duplicata' not in st.session_state:
@@ -43,11 +27,25 @@ def main():
     st.markdown(
         f"""
         <div style="display: flex; justify-content: center; align-items: center; height: 130px;">
-            <img src="data:image/png;base64,{logo_base64}" style="margin-right: 35px; width: 300px;">
+            <img src="data:image/png;base64,{logo_base64}" style="margin-right: 35px; width: 350px;">
         </div>
         """,
         unsafe_allow_html=True
     )
+
+    with st.expander('Quantos litros preciso beber para bater a meta? (de água... 😏)', expanded=False):
+        st.write("Métrica: 35 ml por quilo de peso.")
+
+        peso = st.number_input('Qual o seu peso? (kg)', step=1.00, min_value=00.00)
+
+        if st.button("Calcular :material/calculate:"):
+            st.success(f'Você precisa beber {ml_para_litros(peso*35):.2f} litros de água por dia! :material/water_full:'.replace('.', ','))
+
+    with st.expander('Calculadora de litros', expanded=False):
+        qnt_ml = st.number_input('Quantidade em mililitros (ml):', step=50.00, min_value=00.00)
+
+        if qnt_ml != 0:
+            st.success(f'Essa quantidade equivale a {ml_para_litros(qnt_ml):.2f} litros!'.replace('.', ','))
 
     form_container = st.container(border=True)
 
@@ -80,7 +78,7 @@ def main():
             select_qnd_bebeu = st.radio('Quando você bebeu essa quantidade?', options=[f'Hoje ({data_atual()})', 'Outro dia'], horizontal=True)
 
             if select_qnd_bebeu == 'Outro dia':
-                data_registro = st.date_input('Em que dia você bebeu essa quantidade?', format='DD/MM/YYYY')
+                data_registro = st.date_input('Em que dia você bebeu essa quantidade?', format='DD/MM/YYYY', max_value=datetime.now(pytz.timezone("America/Sao_Paulo")))
                 data_registro = padronizar_data(data_registro)
             else:
                 data_registro = data_atual()
@@ -108,6 +106,7 @@ def main():
                     st.session_state.msg_registro_feito = st.success(':material/water_full: Registro enviado com sucesso!')
                     st.session_state.registro_feito = True
                     st.session_state.aviso_duplicata = False
+                    st.cache_data.clear()
                     st.rerun()
         
         if st.session_state.registro_feito == True:
@@ -115,12 +114,6 @@ def main():
             if st.button("Clique para realizar outro registro :material/replay:", use_container_width=True):
                 st.session_state.registro_feito = False
                 st.rerun()
-
-    with st.expander('Calculadora de litros', expanded=False):
-        qnt_ml = st.number_input('Quantidade em mililitros (ml):', step=50.00, min_value=00.00)
-
-        if qnt_ml != 0:
-            st.success(f'Essa quantidade equivale a {ml_para_litros(qnt_ml):.2f} litros!'.replace('.', ','))
 
     st.markdown(
         f"""
@@ -131,17 +124,8 @@ def main():
         unsafe_allow_html=True
     )
 
-    st.write('criacao da planilha base de dados, conexao da planilha de RH para obter os servidores, ideias dos graficos e ranking com imagens')
-
-
-    st.write(obter_dados_pessoal())
-    st.write(obter_dados_acompanhamento())
-
-    st.divider()
-
     analise_ranking()
 
-    st.divider()
 
             
 if __name__ == "__main__":
