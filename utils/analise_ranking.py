@@ -143,5 +143,5 @@ def analise_ranking():
         column_config={
             'Foto': st.column_config.ImageColumn(width="small")
         },
-        column_order=["Foto", "Nome", "Data", "Quantidade (litros)", "Meta (litros)", "Meta Atingida"]
+        column_order=["Foto", "Nome", "Data", "Quantidade (litros)"]
     )
