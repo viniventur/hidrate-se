@@ -118,7 +118,7 @@ def main():
     st.markdown(
         f"""
         <div style="display: flex; justify-content: center; align-items: center; height: 100px; text-align: center;">
-            <h1 style="font-size: 35px; margin: 0; color: #005CA8;">Acompanhamento</h1>
+            <h1 style="font-size: 35px; margin: 0; color: #005CA8;">Ranking</h1>
         </div>
         """,
         unsafe_allow_html=True
