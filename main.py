@@ -125,23 +125,14 @@ def main():
     st.markdown(
         f"""
         <div style="display: flex; justify-content: center; align-items: center; height: 100px; text-align: center;">
-            <h1 style="font-size: 35px; margin: 0; color: #005CA8;">Acompanhamento</h1>
+            <h1 style="font-size: 35px; margin: 0; color: #005CA8;">Ranking</h1>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    st.write('criacao da planilha base de dados, conexao da planilha de RH para obter os servidores, ideias dos graficos e ranking com imagens')
-
-
-    st.write(obter_dados_pessoal())
-    st.write(obter_dados_acompanhamento())
-
-    st.divider()
-
     analise_ranking()
 
-    st.divider()
 
             
 if __name__ == "__main__":
