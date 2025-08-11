@@ -152,7 +152,8 @@ def main():
                 elif qnt_bebida == 0:
                     st.error('Insira a quantidade.')
                 elif qnt_bebida > 6:
-                    st.session_state.pergunta_confirmacao = True         
+                    st.session_state.pergunta_confirmacao = True
+                    st.rerun()         
                 else:
                     novo_registro(nome, data_hora_registro, qnt_bebida)
                     st.session_state.registro_feito = True
