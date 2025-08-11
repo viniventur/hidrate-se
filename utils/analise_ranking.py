@@ -18,15 +18,15 @@ warnings.filterwarnings('ignore')
 def analise_ranking():
 
     df_acompanhamento = obter_dados_acompanhamento()
-
+    
     if len(df_acompanhamento) == 0:
         st.warning("Ainda não há registros 👀")
         st.stop()
 
-    df_acompanhamento = dados_analise_meta()
+    df_meta = dados_analise_meta()
 
     # 2. Filtrar quem bateu a meta
-    df_meta = df_acompanhamento[df_acompanhamento['Meta Atingida']]
+    df_meta = df_meta[df_meta['Meta Atingida']]
 
     # 3. Contar quantas vezes cada pessoa bateu a meta
     ranking = df_meta['Nome'].value_counts().reset_index()
@@ -77,16 +77,26 @@ def analise_ranking():
 
     ########## gráfico de linha - consumo médio diário ##########
 
-    df_acompanhamento['Data'] = pd.to_datetime(df_acompanhamento['Data'], dayfirst=True, errors='coerce')
+    df_media_diaria = df_acompanhamento.copy()
 
-    # Remove registros com datas inválidas ou quantidade faltante
-    df_acompanhamento = df_acompanhamento.dropna(subset=['Data', 'Quantidade'])
+    # Garantir que Data seja datetime
+    df_media_diaria['Data'] = pd.to_datetime(df_media_diaria['Data'], dayfirst=True, errors='coerce')
 
-    # Agrupa apenas por Data, calculando o consumo médio no dia
-    df_media_diaria = df_acompanhamento.groupby('Data', as_index=False)['Quantidade'].mean()
+    # Remover registros inválidos
+    df_media_diaria = df_media_diaria.dropna(subset=['Data', 'Quantidade'])
 
-    # Formata os valores com 2 casas decimais para exibição nos rótulos
-    df_media_diaria['Quantidade_formatada'] = df_media_diaria['Quantidade'].round(2).astype(str)
+    # Considerar apenas o dia (ignorar hora/minuto)
+    df_media_diaria['Data'] = df_media_diaria['Data'].dt.date
+
+    # Calcular média de Quantidade por data
+    df_media_diaria = (
+        df_media_diaria
+        .groupby('Data', as_index=False)
+        .agg(Quantidade=('Quantidade', 'mean'))
+    )
+
+    # Formatar quantidade com 2 casas decimais e vírgula
+    df_media_diaria['Quantidade_formatada'] = df_media_diaria['Quantidade'].map(lambda x: f"{x:.2f}".replace('.', ','))
 
     # Cria gráfico com rótulos formatados
     fig = px.line(
@@ -115,13 +125,15 @@ def analise_ranking():
 
     st.markdown("##### Tabela completa de registros")
 
+    df_meta = dados_analise_meta_diaria()
+
     # Formatar Data
-    df_acompanhamento['Data'] = pd.to_datetime(df_acompanhamento['Data'], format='%d/%m/%Y %H:%M')
+    df_meta['Data'] = pd.to_datetime(df_meta['Data'], format='%d/%m/%Y %H:%M')
     
     # Substituir True/False por emojis
-    df_acompanhamento['Meta Atingida'] = df_acompanhamento['Meta Atingida'].apply(lambda x: '✅' if x else '❌')
+    df_meta['Meta Atingida'] = df_meta['Meta Atingida'].apply(lambda x: '✅' if x else '❌')
 
-    df_acompanhamento = df_acompanhamento.sort_values(by='Data', ascending=False)
+    df_meta = df_meta.sort_values(by='Data', ascending=False)
 
     col1, col2 = st.columns(2)
 
@@ -130,13 +142,13 @@ def analise_ranking():
         filtro_nome = st.multiselect("Nome", options=dados_nomes_select(), placeholder="Filtro por nome")
 
     # Filtro de intervalo de data
-    data_min = df_acompanhamento['Data'].min().date()
-    data_max = df_acompanhamento['Data'].max().date()
+    data_min = df_meta['Data'].min().date()
+    data_max = df_meta['Data'].max().date()
     with col2:
         filtro_data = st.date_input("Período", value=(data_min, data_max), min_value=data_min, max_value=data_max, format='DD/MM/YYYY')
 
     # Aplica filtros
-    df_filtrado = df_acompanhamento.copy()
+    df_filtrado = df_meta.copy()
 
     # Filtro por nome
     if filtro_nome:

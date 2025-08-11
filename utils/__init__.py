@@ -28,7 +28,8 @@ from utils.conn_gsheets import (
     novo_registro,
     conferir_registro_duplicado,
     dados_nomes_select,
-    dados_analise_meta
+    dados_analise_meta,
+    dados_analise_meta_diaria
 )
 from utils.validacao_dados import (
     get_image_as_base64,

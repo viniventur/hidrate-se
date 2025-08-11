@@ -120,4 +120,37 @@ def dados_analise_meta():
     #df_acompanhamento['Data'] = df_acompanhamento['Data'].dt.strftime('%d/%m/%Y %H:%M')
 
     return df_acompanhamento
+
+
+def dados_analise_meta_diaria():
+
+    df_pessoal = obter_dados_pessoal()
+    df_pessoal['Foto'] = df_pessoal['link_foto'].str.extract(r'id=([^&]+)')  # extrai só o ID
+    df_pessoal['Foto'] = 'https://drive.google.com/thumbnail?id=' + df_pessoal['Foto']
+    df_pessoal.drop(columns=["Nome"], inplace=True)
+    df_pessoal.rename(columns={"nome_padronizado": "Nome"}, inplace=True)
+
+    df_acompanhamento = obter_dados_acompanhamento()
+
+    #df_acompanhamento['Data'] = pd.to_datetime(df_acompanhamento['Data'], dayfirst=True)
+    # Agrupa por pessoa e data, somando a quantidade do dia
+    # df_acompanhamento = df_acompanhamento.groupby(['Nome', 'Data'], as_index=False)['Quantidade'].sum()
+        # Cria coluna de meta atingida com base no peso corporal
+    df_acompanhamento = df_acompanhamento.merge(
+        df_pessoal[['Nome', 'Peso', 'Foto']],  # seleciona só as colunas que precisa
+        on='Nome',
+        how='left'
+    )
+
+    df_acompanhamento['Peso'] = df_acompanhamento['Peso'].astype(int)
+
+    df_acompanhamento['Meta'] = ml_para_litros(df_acompanhamento['Peso'] * 35)
+
+    df_acompanhamento['Meta Atingida'] = df_acompanhamento['Quantidade'] >= df_acompanhamento['Meta']
+
+    # Formata a data para exibição
+    #df_acompanhamento['Data'] = pd.to_datetime(df_acompanhamento['Data']).dt.strftime('%d/%m/%Y')
+    #df_acompanhamento['Data'] = df_acompanhamento['Data'].dt.strftime('%d/%m/%Y %H:%M')
+
+    return df_acompanhamento
     
