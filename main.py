@@ -17,33 +17,38 @@ warnings.filterwarnings('ignore')
 st.set_page_config(page_title=nome_pag_title(), page_icon=img_pag_icon(), layout='centered')
 
 
-def conferir_meta(nome, data_registro):
-    df_acompanhamento = dados_analise_meta()
+def conferir_meta(nome, data_registro, quantidade_atual):
+    # Base de acompanhamentos
+    df = dados_analise_meta()
+    df['Data'] = pd.to_datetime(df['Data'], dayfirst=True, errors='coerce')
+    dia = pd.to_datetime(data_registro, dayfirst=True, errors='coerce').date()
+    df['Dia'] = df['Data'].dt.date
 
-    # Garantir que Data seja datetime
-    df_acompanhamento['Data'] = pd.to_datetime(df_acompanhamento['Data'], errors='coerce')
-    
-    # Extrair só a data (ignorar hora/minuto)
-    df_acompanhamento['Data'] = df_acompanhamento['Data'].dt.date
-    data_registro = pd.to_datetime(data_registro).date()
+    # Meta oficial da pessoa
+    df_pessoal = obter_dados_pessoal()
+    df_pessoal['Peso'] = df_pessoal['Peso'].astype(int)
+    df_pessoal['Meta'] = ml_para_litros(df_pessoal['Peso'] * 35)
 
-    # Calcular Faltante
-    df_acompanhamento['Faltante'] = df_acompanhamento['Meta'] - df_acompanhamento['Quantidade']
+    pessoa = df_pessoal.loc[df_pessoal['nome_padronizado'] == nome]
+    if pessoa.empty:
+        # Se por algum motivo o nome não existir na base oficial, evita crash
+        meta_oficial = 0.0
+    else:
+        meta_oficial = float(pessoa['Meta'].iloc[0])
 
-    # Filtrar por nome e dia
-    df_filtrado = df_acompanhamento.loc[
-        (df_acompanhamento['Nome'] == nome) &
-        (df_acompanhamento['Data'] == data_registro)
-    ]
+    # Soma do dia (se houver)
+    df_user_day = df[(df['Nome'] == nome) & (df['Dia'] == dia)]
 
-    if df_filtrado.empty:
-        return None, None
+    if df_user_day.empty:
+        # Fallback: usa somente o que acabou de ser registrado
+        qtd_total = float(quantidade_atual)
+        faltante = round(meta_oficial - qtd_total, 2)
+        return faltante, round(qtd_total, 2)
 
-    # Padronizar para 2 casas decimais e trocar . por ,
-    faltante = f"{df_filtrado['Faltante'].iloc[0]:.2f}".replace('.', ',')
-    quantidade = f"{df_filtrado['Quantidade'].iloc[0]:.2f}".replace('.', ',')
-
-    return faltante, quantidade
+    # Caso haja registros no dia, usa o agregado do dia
+    qtd_total = float(df_user_day['Quantidade'].sum())
+    faltante = round(meta_oficial - qtd_total, 2)
+    return faltante, round(qtd_total, 2)
 
 def main():
 
@@ -61,6 +66,15 @@ def main():
 
     if 'confirmacao' not in st.session_state:
         st.session_state.confirmacao = False
+
+    if 'nome' not in st.session_state:
+        st.session_state.nome = ''
+
+    if 'data_hora_registro' not in st.session_state:
+        st.session_state.data_hora_registro = '15/09/2025'
+
+    if 'qnt_bebida_registrada' not in st.session_state:
+        st.session_state.qnt_bebida_registrada = 0
 
     logo_path= 'src/assets/logo_hidratese.png'
     logo_base64 = get_image_as_base64(logo_path)
@@ -136,11 +150,13 @@ def main():
 
             if st.session_state.confirmacao == True:
                 novo_registro(nome, data_hora_registro, qnt_bebida)
+                st.session_state.nome = nome
+                st.session_state.data_hora_registro = data_hora_registro
+                st.session_state.qnt_bebida_registrada = qnt_bebida
                 st.session_state.registro_feito = True
                 st.session_state.confirmacao = False
                 st.session_state.pergunta_confirmacao = False
                 st.cache_data.clear()
-                st.session_state.faltante_meta, st.session_state.quantidade = conferir_meta(nome, data_hora_registro)
                 st.rerun()   
             
             botao_enviar = st.button('Enviar :material/check_box:', use_container_width=True)
@@ -156,19 +172,30 @@ def main():
                     st.rerun()         
                 else:
                     novo_registro(nome, data_hora_registro, qnt_bebida)
+                    st.session_state.nome = nome
+                    st.session_state.data_hora_registro = data_hora_registro
+                    st.session_state.qnt_bebida_registrada = qnt_bebida
                     st.session_state.registro_feito = True
                     st.cache_data.clear()
-                    st.session_state.faltante_meta, st.session_state.quantidade = conferir_meta(nome, data_hora_registro)
                     st.rerun()
         
         if st.session_state.registro_feito == True:
+            st.session_state.faltante_meta, st.session_state.quantidade = conferir_meta(
+                st.session_state.nome,
+                st.session_state.data_hora_registro,
+                st.session_state.qnt_bebida_registrada
+            )
+
             st.success(':material/water_full: Registro enviado com sucesso!')
-            if float(st.session_state.faltante_meta.replace(',', '.')) <= 0:
+
+            fmt = lambda x: f"{x:.2f}".replace('.', ',')
+            if st.session_state.faltante_meta <= 0:
                 st.success("Parabéns! Você bateu a meta diária!")
-                st.write(f"Quantidade bebida hoje: {st.session_state.quantidade} litros")
+                st.write(f"Quantidade bebida no dia: {fmt(st.session_state.quantidade)} litros")
                 st.balloons()
             else:
-                st.warning(f"Quase lá! Faltam {st.session_state.faltante_meta} litros para bater a meta! 🏃‍♂️‍➡️")
+                st.warning(f"Quase lá! Faltam {fmt(st.session_state.faltante_meta)} litros para bater a meta! 🏃‍♂️‍➡️")
+                st.write(f"Quantidade bebida no dia: {fmt(st.session_state.quantidade)} litros")
 
             if st.button("Clique para realizar outro registro :material/replay:", use_container_width=True):
                 st.session_state.registro_feito = False
