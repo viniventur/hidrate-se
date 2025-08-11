@@ -59,7 +59,7 @@ def analise_ranking():
         yaxis_title='',
         yaxis=dict(
             tickmode='linear',
-            tickfont=dict(size=16)  # <-- aumenta o tamanho do texto do eixo Y aqui
+            tickfont=dict(size=20)  # <-- aumenta o tamanho do texto do eixo Y aqui
         ),
         plot_bgcolor='rgba(0,0,0,0)'
     )
