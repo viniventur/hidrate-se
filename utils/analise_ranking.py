@@ -161,6 +161,10 @@ def analise_ranking():
 
     df_filtrado['Data'] = df_filtrado['Data'].dt.strftime('%d/%m/%Y %H:%M')
 
+    df_filtrado = df_filtrado.rename(columns={"Quantidade": "Quantidade (litros)", "Meta": "Meta (litros)"})
+
+    df_filtrado = df_filtrado[["Foto", "Nome", "Data", "Quantidade (litros)"]]
+
     # Exibição
     st.dataframe(
         df_filtrado.rename(columns={"Quantidade": "Quantidade (litros)", "Meta": "Meta (litros)"}),
