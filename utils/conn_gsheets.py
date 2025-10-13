@@ -99,6 +99,7 @@ def dados_analise_meta():
 
     df_acompanhamento = obter_dados_acompanhamento()
 
+
     df_acompanhamento['Data'] = pd.to_datetime(df_acompanhamento['Data'], dayfirst=True)
     # Agrupa por pessoa e data, somando a quantidade do dia
     df_acompanhamento = df_acompanhamento.groupby(['Nome', 'Data'], as_index=False)['Quantidade'].sum()
@@ -108,6 +109,8 @@ def dados_analise_meta():
         on='Nome',
         how='left'
     )
+
+    df_acompanhamento = df_acompanhamento.dropna()
 
     df_acompanhamento['Peso'] = df_acompanhamento['Peso'].astype(int)
 
@@ -141,6 +144,8 @@ def dados_analise_meta_diaria():
         on='Nome',
         how='left'
     )
+
+    df_acompanhamento = df_acompanhamento.dropna()
 
     df_acompanhamento['Peso'] = df_acompanhamento['Peso'].astype(int)
 
