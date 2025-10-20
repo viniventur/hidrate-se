@@ -93,7 +93,7 @@ def main():
 
         peso = st.number_input('Qual o seu peso? (kg)', step=1.00, min_value=00.00)
 
-        if st.button("Calcular :material/calculate:"):
+        if st.button("Calcular :material/functions:", type='primary'):
             st.success(f'Você precisa beber {ml_para_litros(peso*35):.2f}'.replace('.', ',') + ' litros (de água... 😏) por dia! :material/water_full:')
 
     form_container = st.container(border=True)
@@ -159,7 +159,7 @@ def main():
                 st.cache_data.clear()
                 st.rerun()   
             
-            botao_enviar = st.button('Enviar :material/check_box:', use_container_width=True)
+            botao_enviar = st.button('Enviar :material/check_box:', use_container_width=True, type='primary')
 
             if botao_enviar:
 
