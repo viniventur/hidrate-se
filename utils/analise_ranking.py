@@ -36,11 +36,26 @@ def analise_ranking():
     # Ordena o ranking (caso ainda não esteja)
     ranking = ranking.sort_values(by='Quantidade de Metas Batidas', ascending=False).reset_index(drop=True)
 
-    # Adiciona os emojis nos 3 primeiros
-    emojis = ['🥇', '🥈', '🥉']
-    for i in range(min(3, len(ranking))):
-        ranking.loc[i, 'Nome'] = f"{emojis[i]} {ranking.loc[i, 'Nome']}"
+    # Ordena pelo número de metas batidas (maior primeiro)
+    ranking = ranking.sort_values('Quantidade de Metas Batidas', ascending=False)
 
+    # Identifica os três maiores valores únicos
+    top_valores = ranking['Quantidade de Metas Batidas'].unique()[:3]
+
+    # Define as medalhas
+    emojis = ['🥇', '🥈', '🥉']
+
+    # Adiciona as medalhas para todos empatados nas 3 maiores quantidades
+    ranking['Medalha'] = ''
+    for i, valor in enumerate(top_valores):
+        ranking.loc[ranking['Quantidade de Metas Batidas'] == valor, 'Medalha'] = emojis[i]
+
+    # Junta a medalha ao nome (se houver)
+    ranking['Nome'] = ranking.apply(
+        lambda x: f"{x['Medalha']} {x['Nome']}" if x['Medalha'] else x['Nome'], axis=1
+    )
+
+    # Reordena novamente do maior para o menor antes de mostrar
     ranking = ranking.sort_values('Quantidade de Metas Batidas', ascending=True)
 
     # 4. Gráfico com Plotly
@@ -110,15 +125,19 @@ def analise_ranking():
 
     fig.update_traces(
         textposition='top center',
-        textfont_size=12
+        textfont=dict(size=12, color='black'),
+        line=dict(width=3),
+        marker=dict(size=10)
     )
 
     fig.update_layout(
         xaxis_title='',
         yaxis_title='Média de consumo (litros)',
         plot_bgcolor='rgba(0,0,0,0)',
-        showlegend=False
+        showlegend=False,
+        font=dict(size=14)
     )
+
 
     st.plotly_chart(fig, use_container_width=True)
 

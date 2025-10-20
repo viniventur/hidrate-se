@@ -92,13 +92,14 @@ def dados_nomes_select():
 def dados_analise_meta():
 
     df_pessoal = obter_dados_pessoal()
-    df_pessoal['Foto'] = df_pessoal['link_foto'].str.extract(r'id=([^&]+)')  # extrai só o ID
+    df_pessoal['Foto'] = df_pessoal['link_foto'].str.extract(
+        r'(?:id=|/d/)([a-zA-Z0-9_-]+)'
+    )  # extrai só o ID
     df_pessoal['Foto'] = 'https://drive.google.com/thumbnail?id=' + df_pessoal['Foto']
     df_pessoal.drop(columns=["Nome"], inplace=True)
     df_pessoal.rename(columns={"nome_padronizado": "Nome"}, inplace=True)
 
     df_acompanhamento = obter_dados_acompanhamento()
-
 
     df_acompanhamento['Data'] = pd.to_datetime(df_acompanhamento['Data'], dayfirst=True)
     # Agrupa por pessoa e data, somando a quantidade do dia
@@ -110,7 +111,8 @@ def dados_analise_meta():
         how='left'
     )
 
-    df_acompanhamento = df_acompanhamento.dropna()
+
+    df_acompanhamento = df_acompanhamento.dropna(subset=['Peso'])
 
     df_acompanhamento['Peso'] = df_acompanhamento['Peso'].astype(int)
 
@@ -128,7 +130,9 @@ def dados_analise_meta():
 def dados_analise_meta_diaria():
 
     df_pessoal = obter_dados_pessoal()
-    df_pessoal['Foto'] = df_pessoal['link_foto'].str.extract(r'id=([^&]+)')  # extrai só o ID
+    df_pessoal['Foto'] = df_pessoal['link_foto'].str.extract(
+        r'(?:id=|/d/)([a-zA-Z0-9_-]+)'
+    )  # extrai só o ID
     df_pessoal['Foto'] = 'https://drive.google.com/thumbnail?id=' + df_pessoal['Foto']
     df_pessoal.drop(columns=["Nome"], inplace=True)
     df_pessoal.rename(columns={"nome_padronizado": "Nome"}, inplace=True)
@@ -145,7 +149,7 @@ def dados_analise_meta_diaria():
         how='left'
     )
 
-    df_acompanhamento = df_acompanhamento.dropna()
+    df_acompanhamento = df_acompanhamento.dropna(subset=['Peso'])
 
     df_acompanhamento['Peso'] = df_acompanhamento['Peso'].astype(int)
 
